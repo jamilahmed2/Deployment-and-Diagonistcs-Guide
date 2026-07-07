@@ -1,5 +1,5 @@
-# Remix App Deployment Guide
-
+# Deployment and Diagnostics Guide
+https://github.com/jamilahmed2/Deployment-guide/blob/main/Diagnostics.md
 ## Prerequisites
 Before starting the deployment, ensure you have the necessary dependencies installed:
 
