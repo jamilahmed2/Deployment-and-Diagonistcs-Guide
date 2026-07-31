@@ -34,10 +34,12 @@ npm -v
 If your project uses **Bun** instead of **npm**, install it using the following commands.
 
 #### Install Bun
+```unzip
+apt install unzip
+```
 ```sh
 curl -fsSL https://bun.sh/install | bash
 ```
-
 #### Reload Your Shell
 For Bash:
 ```sh
@@ -142,6 +144,110 @@ psql
 \q
 ```
 or press Ctrl + D
+
+## Step 0: Configure Swap Memory (Recommended for 2GB RAM Servers)
+
+Small servers (1-2GB RAM) frequently run out of memory during `npm install`, `npm run build`, or `bun run build`, causing the process to be killed (`Killed` in the terminal, or exit code 137). Adding a swap file gives the kernel extra "overflow" space on disk so builds don't get OOM-killed.
+
+### Check current memory and swap
+```sh
+free -h
+swapon --show
+```
+
+### Create a 2GB swap file
+```sh
+sudo fallocate -l 2G /swapfile
+```
+If `fallocate` isn't supported on your filesystem, use `dd` instead:
+```sh
+sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+```
+
+### Secure and enable the swap file
+```sh
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+### Verify it's active
+```sh
+sudo swapon --show
+free -h
+```
+
+### Make swap permanent (survives reboot)
+```sh
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+### Tune swappiness (optional, reduces unnecessary swapping)
+Lower values make the kernel prefer RAM over swap until it's actually needed — good for a build/app server:
+```sh
+sudo sysctl vm.swappiness=10
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+```
+
+### Remove swap (if ever needed)
+```sh
+sudo swapoff /swapfile
+sudo rm /swapfile
+sudo sed -i '/\/swapfile/d' /etc/fstab
+```
+
+> **Tip:** For a 2GB RAM VPS, a 2GB swap file is a safe baseline. For 1GB RAM or heavier builds (large Remix/Next.js apps), consider 4GB swap.
+
+## Step 0.1: Low-Memory Build/Run Commands (512MB RAM, No Swap)
+
+If the server only has **512MB RAM and no swap configured yet**, standard `npm run build` / `bun run build` will often crash with an out-of-memory error. Cap the memory Node/Bun is allowed to use and disable memory-hungry features until you can set up swap (Step 0 above).
+
+### npm / Node — low-memory build
+Limit the V8 heap size (in MB) so the process fails gracefully or throttles instead of getting OOM-killed:
+```sh
+NODE_OPTIONS="--max-old-space-size=384" npm run build
+```
+
+Low-memory install (avoids parallel network/install overhead):
+```sh
+npm install --prefer-offline --no-audit --no-fund --maxsockets 1
+```
+
+Low-memory start (production):
+```sh
+NODE_OPTIONS="--max-old-space-size=384" npm run start
+```
+
+If using with Shopify/Remix env vars, combine both:
+```sh
+SHOPIFY_API_KEY=[API_KEY] NODE_OPTIONS="--max-old-space-size=384" npm run build
+```
+
+Low-memory PM2 start (so PM2-managed processes also respect the cap):
+```sh
+pm2 start npm --name "[handle]" --node-args="--max-old-space-size=384" -- run start
+```
+
+### Bun — low-memory build
+Bun doesn't expose a heap flag like Node, so constrain it at the OS level with `ulimit` and let the smaller install/runtime footprint do the rest:
+```sh
+ulimit -v 524288   # limits virtual memory to ~512MB for this shell session
+bun install
+bun run build
+```
+
+Low-memory Bun start:
+```sh
+ulimit -v 524288
+bun run start
+```
+
+Low-memory PM2 start for Bun:
+```sh
+pm2 start bun --name "[handle]" --node-args="" -- start
+```
+
+> **Warning:** Building large Remix/Next.js/Shopify apps on 512MB RAM without swap is risky even with these caps — the build may still fail intermittently. These commands buy you some headroom, but setting up swap (Step 0) is the more reliable fix. Treat these as a stopgap, not a permanent solution.
 
 ## Step 1: Create Nginx Configuration
 Navigate to Nginx Sites-Available Directory:
@@ -248,14 +354,23 @@ Install PM2:
 npm install pm2 -g
 ```
 
-Build Your Application:
+Build Your Application npm or bun:
 ```sh
 SHOPIFY_API_KEY=[API_KEY] npm run build
 ```
+```sh
+bun run build
+```
+
+> **Low on RAM?** See Step 0 (swap setup) for 2GB servers, or Step 0.1 (memory-capped commands) if you're on 512MB with no swap yet.
 
 Start Application with PM2:
 ```sh
 pm2 start npm --name "[handle]" -- run start
+```
+
+```sh
+pm2 start bun --name "[handle]" -- start
 ```
 
 ## Final Step: Restart Nginx
@@ -281,14 +396,21 @@ rm -rf node_modules/
 npm install
 ```
 
+### Check for OOM Kills (Out of Memory)
+If a build or process died unexpectedly on low-RAM servers, check the kernel log to confirm it was memory-related:
+```sh
+dmesg -T | grep -i "killed process"
+```
+
 ## Summary
 1. Install Nginx, Node.js (via NVM), and MySQL.
-2. Create and configure the Nginx reverse proxy.
-3. Apply SSL with Certbot.
-4. Deploy your Remix project.
-5. Use PM2 for process management.
-6. Update extension configurations.
-7. Restart Nginx.
+2. (If low on RAM) Configure swap memory, or use low-memory build/run commands.
+3. Create and configure the Nginx reverse proxy.
+4. Apply SSL with Certbot.
+5. Deploy your Remix project.
+6. Use PM2 for process management.
+7. Update extension configurations.
+8. Restart Nginx.
 
 Your **Remix app** should now be deployed, secured with SSL, and running on **PM2** with **Nginx** as a reverse proxy.
 
@@ -310,7 +432,7 @@ This will copy the `translation-worker-error.log` file from your server to your 
 ---
 
 ### 🔹 Run Prisma Studio or Development Server Remotely via SSH Tunnel
-If you’re using **Prisma** and want to access Prisma Studio (or run your dev server) locally while the app runs on the server, use SSH port forwarding:
+If you're using **Prisma** and want to access Prisma Studio (or run your dev server) locally while the app runs on the server, use SSH port forwarding:
 
 ```sh
 ssh -L <local-port>:<remote-host>:<remote-port> user@your-server-ip
