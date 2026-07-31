@@ -29,6 +29,61 @@ Verify Node.js and npm installation:
 node -v
 npm -v
 ```
+### 2.1 Install Bun (Optional)
+
+If your project uses **Bun** instead of **npm**, install it using the following commands.
+
+#### Install Bun
+```sh
+curl -fsSL https://bun.sh/install | bash
+```
+
+#### Reload Your Shell
+For Bash:
+```sh
+source ~/.bashrc
+```
+
+For Zsh:
+```sh
+source ~/.zshrc
+```
+
+#### Verify Installation
+```sh
+bun --version
+```
+
+#### Install Project Dependencies
+```sh
+bun install
+```
+
+#### Run Scripts
+Development:
+```sh
+bun run dev
+```
+
+Build:
+```sh
+bun run build
+```
+
+Start:
+```sh
+bun run start
+```
+
+#### Install a Global Package
+```sh
+bun add -g <package-name>
+```
+
+#### Update Bun
+```sh
+bun upgrade
+```
 
 ### 3. Install MySQL Server
 ```sh
