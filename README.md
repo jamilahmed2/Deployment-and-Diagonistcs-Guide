@@ -1,5 +1,37 @@
 # Deployment and Diagnostics Guide
 https://github.com/jamilahmed2/Deployment-guide/blob/main/Diagnostics.md
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+  - [1. Install Nginx](#1-install-nginx)
+  - [2. Install Node.js using NVM](#2-install-nodejs-using-nvm)
+    - [2.1 Install Bun (Optional)](#21-install-bun-optional)
+  - [3. Install MySQL Server](#3-install-mysql-server)
+    - [3.1 Install Postgres Server](#31-install-postgres-server)
+  - [4. Check Postgres status](#4-check-postgres-status)
+  - [5. Switch to postgres user](#5-switch-to-postgres-user)
+  - [6. Access PostgreSQL shell](#6-access-postgresql-shell)
+  - [7. Change the password](#7-change-the-password)
+- [Step 0: Configure Swap Memory (2GB RAM Servers)](#step-0-configure-swap-memory-recommended-for-2gb-ram-servers)
+- [Step 0.1: Low-Memory Build/Run Commands (512MB RAM, No Swap)](#step-01-low-memory-buildrun-commands-512mb-ram-no-swap)
+- [Step 1: Create Nginx Configuration](#step-1-create-nginx-configuration)
+- [Step 2: Create Symbolic Link](#step-2-create-symbolic-link)
+- [Step 3: Apply SSL Certificate](#step-3-apply-ssl-certificate)
+- [Step 4: Deploy Your Project](#step-4-deploy-your-project)
+- [Step 5: Install and Configure PM2](#step-5-install-and-configure-pm2)
+- [Final Step: Restart Nginx](#final-step-restart-nginx)
+- [Additional Commands](#additional-commands)
+  - [Reset MySQL Root Password](#reset-mysql-root-password)
+  - [Fix `.env` Not Loading Issue](#fix-env-not-loading-issue)
+  - [Check for OOM Kills](#check-for-oom-kills-out-of-memory)
+- [Summary](#summary)
+- [🧩 Extras](#-extras)
+  - [Import File from Your Server to Local Machine](#-import-file-from-your-server-to-local-machine)
+  - [Run Prisma Studio / Dev Server via SSH Tunnel](#-run-prisma-studio-or-development-server-remotely-via-ssh-tunnel)
+
+---
+
 ## Prerequisites
 Before starting the deployment, ensure you have the necessary dependencies installed:
 
