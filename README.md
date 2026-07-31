@@ -88,36 +88,8 @@ source ~/.zshrc
 bun --version
 ```
 
-#### Install Project Dependencies
-```sh
-bun install
-```
+> Project-specific commands (installing dependencies, running dev/build/start scripts) are covered in Step 4, once the project has actually been cloned onto the server.
 
-#### Run Scripts
-Development:
-```sh
-bun run dev
-```
-
-Build:
-```sh
-bun run build
-```
-
-Start:
-```sh
-bun run start
-```
-
-#### Install a Global Package
-```sh
-bun add -g <package-name>
-```
-
-#### Update Bun
-```sh
-bun upgrade
-```
 
 ### 3. Install MySQL Server
 ```sh
@@ -353,10 +325,19 @@ cd /var/www/html/
 git clone [your-repo-url]
 ```
 
-Install Dependencies:
+Move into the project directory:
 ```sh
 cd [your-project-directory]
+```
+
+Install Dependencies (npm):
+```sh
 npm install
+```
+
+Install Dependencies (bun) — use this instead if the project uses Bun:
+```sh
+bun install
 ```
 
 create an .env file
@@ -375,9 +356,47 @@ SHOPIFY_APP_URL=http://app.fontmarket.com/          # ([your-domain])
 SCOPES=read_files,write_files,write_products        # ([scopes needed])
 ```
 
-Sync MySQL with Remix:
+Sync MySQL with Remix (npm):
 ```sh
 npm run setup
+```
+
+Sync MySQL with Remix (bun):
+```sh
+bun run setup
+```
+
+### Project Scripts Reference (Bun)
+
+If your project uses **Bun**, these are the equivalent scripts you'll use throughout local development and on the server, scoped to `[your-project-directory]` (run these from inside the cloned project, not globally):
+
+Development:
+```sh
+bun run dev
+```
+
+Build:
+```sh
+bun run build
+```
+
+Start:
+```sh
+bun run start
+```
+
+> These map 1:1 to the `npm run dev` / `npm run build` / `npm run start` scripts defined in the project's `package.json` — Bun just executes the same script names faster. If a script name differs in your project's `package.json` (e.g. `bun run serve` instead of `bun run start`), use that name instead.
+
+The following two are **global, machine-level** Bun commands (not project-specific) — only needed once per server, not per project:
+
+Install a Global Package:
+```sh
+bun add -g <package-name>
+```
+
+Update Bun:
+```sh
+bun upgrade
 ```
 
 ## Step 5: Install and Configure PM2
@@ -386,12 +405,14 @@ Install PM2:
 npm install pm2 -g
 ```
 
-Build Your Application npm or bun:
+Build Your Application (from inside `[your-project-directory]`) — npm:
 ```sh
 SHOPIFY_API_KEY=[API_KEY] npm run build
 ```
+
+Build Your Application (from inside `[your-project-directory]`) — bun:
 ```sh
-bun run build
+SHOPIFY_API_KEY=[API_KEY] bun run build
 ```
 
 > **Low on RAM?** See Step 0 (swap setup) for 2GB servers, or Step 0.1 (memory-capped commands) if you're on 512MB with no swap yet.
